@@ -1,0 +1,17 @@
+{
+  "name": "BudgetBuddy",
+  "short_name": "BudgetBuddy",
+  "description": "Your money, your plan.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#F4F9F6",
+  "theme_color": "#48B577",
+  "icons": [
+    {
+      "src": "BudgetBuddy.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
