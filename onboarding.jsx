@@ -123,7 +123,11 @@ function IncomeStep({ income, setIncome, payDay, setPayDay, onNext, onBack }) {
                   className="input-field"
                   placeholder="e.g. 1 or 15"
                   value={payDay || ''}
-                  onChange={e => setPayDay(Math.min(31, Math.max(1, Number(e.target.value) || 1)))}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === '') setPayDay('');
+                    else setPayDay(Math.min(31, Math.max(1, Number(val))));
+                  }}
                   style={{ maxWidth: 120 }}
                   onKeyDown={e => e.key === 'Enter' && income > 0 && onNext()}
                 />
