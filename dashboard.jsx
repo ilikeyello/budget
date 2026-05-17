@@ -186,7 +186,7 @@ function TransactionsSection({ segments, transactions, patch }) {
         </select>
         <div style={{ display: 'flex', alignItems: 'center', width: 120, border: '2px solid var(--border)', borderRadius: 14, background: 'var(--card)', padding: '0 12px' }}>
           <span style={{ color: 'var(--text-tertiary)', fontWeight: 700 }}>$</span>
-          <input type="number" placeholder="0" value={txAmount} onChange={e => setTxAmount(e.target.value)} style={{ border: 'none', outline: 'none', width: '100%', fontFamily: 'Nunito, sans-serif', fontSize: 16, fontWeight: 600, padding: '10px 8px', background: 'transparent', color: 'var(--text)' }} />
+          <input type="number" inputMode="decimal" placeholder="0" value={txAmount} onChange={e => setTxAmount(e.target.value)} style={{ border: 'none', outline: 'none', width: '100%', fontFamily: 'Nunito, sans-serif', fontSize: 16, fontWeight: 600, padding: '10px 8px', background: 'transparent', color: 'var(--text)' }} />
         </div>
         <input className="input-field" placeholder="Note (optional)" value={txNote} onChange={e => setTxNote(e.target.value)} style={{ flex: 2, minWidth: 160, padding: '10px 14px' }} />
         <button onClick={addTx} className="btn btn-primary" style={{ padding: '10px 20px' }}>Add</button>

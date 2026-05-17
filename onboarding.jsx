@@ -103,7 +103,7 @@ function IncomeStep({ income, setIncome, payDay, setPayDay, onNext, onBack }) {
             <span style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-tertiary)' }}>$</span>
             <input
               ref={ref}
-              type="number"
+              type="number" inputMode="decimal"
               className="input-field input-lg"
               placeholder="0"
               value={income || ''}
@@ -119,7 +119,7 @@ function IncomeStep({ income, setIncome, payDay, setPayDay, onNext, onBack }) {
               <div className="anim-in" style={{ marginTop: 24, animationDelay: '0.1s' }}>
                 <p style={{ fontWeight: 600, marginBottom: 8 }}>What day of the month do you get paid?</p>
                 <input
-                  type="number" min="1" max="31"
+                  type="number" inputMode="decimal" min="1" max="31"
                   className="input-field"
                   placeholder="e.g. 1 or 15"
                   value={payDay || ''}
@@ -209,12 +209,12 @@ function DebtsStep({ income, debts, setDebts, onNext, onBack }) {
               onKeyDown={e => e.key === 'Enter' && add()} />
             <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 100, border: '2px solid var(--border)', borderRadius: 14, background: 'var(--card)', padding: '0 12px' }}>
               <span style={{ color: 'var(--text-tertiary)', fontWeight: 700 }}>$</span>
-              <input type="number" placeholder="0" value={amount}
+              <input type="number" inputMode="decimal" placeholder="0" value={amount}
                 onChange={e => setAmount(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && add()}
                 style={{ border: 'none', outline: 'none', width: '100%', fontFamily: 'Nunito, sans-serif', fontSize: 16, fontWeight: 600, padding: '12px 8px', background: 'transparent', color: 'var(--text)' }} />
             </div>
-            <input type="number" min="1" max="31" className="input-field" placeholder="Day (1-31)" value={dueDate}
+            <input type="number" inputMode="decimal" min="1" max="31" className="input-field" placeholder="Day (1-31)" value={dueDate}
               onChange={e => setDueDate(e.target.value)} style={{ width: 110 }}
               onKeyDown={e => e.key === 'Enter' && add()} />
             <button onClick={add} className="btn btn-secondary" style={{ padding: '12px 18px', whiteSpace: 'nowrap' }}>Add</button>
@@ -400,7 +400,7 @@ function AllocationStep({ remaining, categories, allocations, setAllocations, on
                       padding: '6px 10px', minWidth: 100, background: 'var(--card)',
                     }}>
                       <span style={{ color: 'var(--text-tertiary)', fontWeight: 700, fontSize: 15 }}>$</span>
-                      <input type="number" min={0} value={val || ''}
+                      <input type="number" inputMode="decimal" min={0} value={val || ''}
                         onChange={e => setVal(cat.id, Number(e.target.value) || 0)}
                         style={{ border: 'none', outline: 'none', width: '100%', fontFamily: 'Nunito, sans-serif', fontWeight: 700, fontSize: 15, padding: '4px 6px', background: 'transparent', color: 'var(--text)' }}
                       />
@@ -476,7 +476,7 @@ function RolloverStep({ data, patch, onComplete }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-tertiary)' }}>$</span>
             <input
-              type="number" className="input-field input-lg"
+              type="number" inputMode="decimal" className="input-field input-lg"
               value={newIncome || ''}
               onChange={e => setNewIncome(Math.max(0, Number(e.target.value) || 0))}
             />
