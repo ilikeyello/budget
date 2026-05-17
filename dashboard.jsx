@@ -313,7 +313,7 @@ function Dashboard({ data, patch, tweaks, onEdit, onReset }) {
         {/* Quick Log Button */}
         {segments.length > 0 && (
           <div className="anim-in" style={{ marginTop: 24, display: 'flex', justifyContent: 'center', animationDelay: '0.1s' }}>
-            <button className="btn btn-primary" onClick={() => setShowLogModal(true)} style={{ padding: '14px 32px', fontSize: 16, width: '100%', borderRadius: 'var(--radius-pill)', boxShadow: 'var(--shadow-md)' }}>
+            <button className="btn btn-primary" onClick={() => setShowLogModal(true)} style={{ padding: '12px 28px', fontSize: 15, borderRadius: 'var(--radius-pill)', boxShadow: 'var(--shadow-sm)' }}>
               + Log Expense
             </button>
           </div>
