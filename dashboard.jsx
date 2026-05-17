@@ -166,10 +166,10 @@ function TipCard({ tip, i }) {
 }
 
 /* ═══════════════════════════ LOG EXPENSE MODAL ═══════════════════════════ */
-function LogExpenseModal({ segments, transactions, patch, onClose }) {
-  const [txAmount, setTxAmount] = useState('');
-  const [txCat, setTxCat] = useState('');
-  const [txNote, setTxNote] = useState('');
+function LogExpenseModal({ segments, transactions, patch, onClose, initialData = {} }) {
+  const [txAmount, setTxAmount] = useState(initialData.amount ? String(initialData.amount) : '');
+  const [txCat, setTxCat] = useState(initialData.categoryId || '');
+  const [txNote, setTxNote] = useState(initialData.merchant || '');
 
   const addTx = () => {
     if (!txAmount || !txCat) return;
@@ -266,6 +266,8 @@ function TransactionsSection({ segments, transactions, patch }) {
 /* ═══════════════════════════ DASHBOARD ═══════════════════════════ */
 function Dashboard({ data, patch, tweaks, onEdit, onReset }) {
   const [showLogModal, setShowLogModal] = useState(false);
+  const [scanData, setScanData] = useState({});
+  const [isScanning, setIsScanning] = useState(false);
   const { income, debts, categories, allocations, transactions = [], rolloverBoosts = {}, paySchedule } = data;
   const totalDebts = debts.reduce((s, d) => s + d.amount, 0);
   const remaining = income - totalDebts;
@@ -291,9 +293,56 @@ function Dashboard({ data, patch, tweaks, onEdit, onReset }) {
 
   const ChartComponent = tweaks.chartStyle === 'bars' ? HBarChart : DonutChart;
 
+  const compressImage = (file, maxWidth = 800) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ratio = Math.min(1, maxWidth / img.width);
+          canvas.width = img.width * ratio;
+          canvas.height = img.height * ratio;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.6));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleScan = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    try {
+      const base64 = await compressImage(file);
+      const res = await fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64, categories: segments.map(s => ({id: s.id, name: s.name})) })
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Server error: ${res.status}`);
+      }
+      const data = await res.json();
+      setScanData({ amount: data.amount || '', merchant: data.merchant || '', categoryId: data.categoryId || '' });
+      setShowLogModal(true);
+    } catch (err) {
+      alert('Failed to scan receipt: ' + err.message);
+    } finally {
+      setIsScanning(false);
+    }
+    e.target.value = '';
+  };
+
   return (
     <div style={{ minHeight: '100vh', minHeight: '100dvh', padding: '24px 16px', background: 'var(--surface)' }}>
-      {showLogModal && <LogExpenseModal segments={segments} transactions={transactions} patch={patch} onClose={() => setShowLogModal(false)} />}
+      {showLogModal && <LogExpenseModal segments={segments} transactions={transactions} patch={patch} onClose={() => setShowLogModal(false)} initialData={scanData} />}
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         {/* Header */}
         <div className="anim-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
@@ -312,10 +361,14 @@ function Dashboard({ data, patch, tweaks, onEdit, onReset }) {
 
         {/* Quick Log Button */}
         {segments.length > 0 && (
-          <div className="anim-in" style={{ marginTop: 24, display: 'flex', justifyContent: 'center', animationDelay: '0.1s' }}>
-            <button className="btn btn-primary" onClick={() => setShowLogModal(true)} style={{ padding: '12px 28px', fontSize: 15, borderRadius: 'var(--radius-pill)', boxShadow: 'var(--shadow-sm)' }}>
+          <div className="anim-in" style={{ marginTop: 24, display: 'flex', justifyContent: 'center', gap: 12, animationDelay: '0.1s' }}>
+            <button className="btn btn-primary" onClick={() => { setScanData({}); setShowLogModal(true); }} style={{ padding: '12px 28px', fontSize: 15, borderRadius: 'var(--radius-pill)', boxShadow: 'var(--shadow-sm)' }}>
               + Log Expense
             </button>
+            <label className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '12px 20px', fontSize: 15, borderRadius: 'var(--radius-pill)', boxShadow: 'var(--shadow-sm)', cursor: 'pointer', opacity: isScanning ? 0.6 : 1, pointerEvents: isScanning ? 'none' : 'auto' }}>
+              {isScanning ? 'Scanning...' : '📸 Scan Receipt'}
+              <input type="file" accept="image/*" capture="environment" onChange={handleScan} style={{ display: 'none' }} />
+            </label>
           </div>
         )}
 
