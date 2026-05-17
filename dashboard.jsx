@@ -165,6 +165,33 @@ function TipCard({ tip, i }) {
   );
 }
 
+/* ═══════════════════════════ SCANNING OVERLAY ═══════════════════════════ */
+function ScanningOverlay() {
+  return (
+    <div className="anim-fade" style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      background: 'rgba(27, 51, 39, 0.85)', zIndex: 9999,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)'
+    }}>
+      <style>{`
+        @keyframes floatBuddy {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-15px) scale(1.05); }
+        }
+      `}</style>
+      <div className="anim-scale" style={{ textAlign: 'center' }}>
+        <img src="BudgetBuddyTransparent.png" alt="Budget Buddy" style={{
+          width: 140, height: 140, marginBottom: 24,
+          animation: 'floatBuddy 2s ease-in-out infinite'
+        }} />
+        <h2 style={{ color: 'white', fontSize: 24, marginBottom: 8, fontWeight: 800 }}>Buddy is analyzing...</h2>
+        <p style={{ color: 'var(--border)', fontSize: 16, fontWeight: 500 }}>Reading the receipt and crunching the numbers!</p>
+      </div>
+    </div>
+  );
+}
+
 /* ═══════════════════════════ LOG EXPENSE MODAL ═══════════════════════════ */
 function LogExpenseModal({ segments, transactions, patch, onClose, initialData = {} }) {
   const [txAmount, setTxAmount] = useState(initialData.amount ? String(initialData.amount) : '');
@@ -342,6 +369,7 @@ function Dashboard({ data, patch, tweaks, onEdit, onReset }) {
 
   return (
     <div style={{ minHeight: '100vh', minHeight: '100dvh', padding: '24px 16px', background: 'var(--surface)' }}>
+      {isScanning && <ScanningOverlay />}
       {showLogModal && <LogExpenseModal segments={segments} transactions={transactions} patch={patch} onClose={() => setShowLogModal(false)} initialData={scanData} />}
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         {/* Header */}
