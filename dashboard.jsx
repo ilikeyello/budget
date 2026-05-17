@@ -310,14 +310,20 @@ function Dashboard({ data, patch, tweaks, onEdit, onReset }) {
         {/* Summary cards */}
         <SummaryCards income={income} totalDebts={totalDebts} totalAllocated={totalAllocated} totalSpent={totalSpent} remaining={remaining} paySchedule={paySchedule} />
 
+        {/* Quick Log Button */}
+        {segments.length > 0 && (
+          <div className="anim-in" style={{ marginTop: 24, display: 'flex', justifyContent: 'center', animationDelay: '0.1s' }}>
+            <button className="btn btn-primary" onClick={() => setShowLogModal(true)} style={{ padding: '14px 32px', fontSize: 16, width: '100%', borderRadius: 'var(--radius-pill)', boxShadow: 'var(--shadow-md)' }}>
+              + Log Expense
+            </button>
+          </div>
+        )}
+
         {/* Chart + Categories */}
         <div className="dashboard-main-grid" style={{ display: 'grid', gridTemplateColumns: segments.length > 0 ? 'minmax(220px, 1fr) 2fr' : '1fr', gap: 20, marginTop: 24, alignItems: 'start' }}>
           {segments.length > 0 && (
             <div className="anim-in" style={{ animationDelay: '0.2s', background: 'var(--card)', borderRadius: 'var(--radius)', padding: 24, boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <h3 style={{ fontSize: 16 }}>Budget Breakdown</h3>
-                <button className="btn btn-primary" onClick={() => setShowLogModal(true)} style={{ padding: '6px 14px', fontSize: 13, borderRadius: 'var(--radius-pill)' }}>+ Log Expense</button>
-              </div>
+              <h3 style={{ marginBottom: 16, fontSize: 16 }}>Budget Breakdown</h3>
               <ChartComponent segments={segments} />
               {/* Legend for donut */}
               {tweaks.chartStyle !== 'bars' && (
