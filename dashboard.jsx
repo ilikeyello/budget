@@ -1,10 +1,12 @@
 const { useState, useEffect, useMemo } = React;
 
 /* ═══════════════════════════ SUMMARY CARDS ═══════════════════════════ */
-function SummaryCards({ income, totalDebts, totalAllocated, totalSpent, remaining, payDay }) {
+function SummaryCards({ income, totalDebts, totalAllocated, totalSpent, remaining, paySchedule }) {
   const left = remaining - totalSpent;
+  const freqStr = paySchedule?.frequency ? paySchedule.frequency.charAt(0).toUpperCase() + paySchedule.frequency.slice(1).replace('weekly', '-weekly') : '';
+  const dateStr = paySchedule?.nextDate ? paySchedule.nextDate.split('-').slice(1).join('/') : '';
   const cards = [
-    { label: 'Income', value: fmt(income), color: 'var(--primary)', bg: 'var(--primary-lighter)', sub: `Payday: ${payDay}` },
+    { label: 'Monthly Income', value: fmt(income), color: 'var(--primary)', bg: 'var(--primary-lighter)', sub: `${freqStr} (Next: ${dateStr})` },
     { label: 'Fixed Costs', value: fmt(totalDebts), color: '#E85D5D', bg: '#FFF0F0', sub: `${Math.round((totalDebts / income) * 100)}%` },
     { label: 'Spent So Far', value: fmt(totalSpent), color: '#E8A440', bg: '#FFF8E0', sub: `${Math.round((totalSpent / totalAllocated) * 100) || 0}% of budget` },
     { label: 'Left to Spend', value: fmt(left), color: left >= 0 ? 'var(--primary-dark)' : 'var(--danger)', bg: left >= 0 ? 'var(--primary-lighter)' : '#FFF0F0', sub: 'flexible' },
@@ -222,7 +224,7 @@ function TransactionsSection({ segments, transactions, patch }) {
 
 /* ═══════════════════════════ DASHBOARD ═══════════════════════════ */
 function Dashboard({ data, patch, tweaks, onEdit, onReset }) {
-  const { income, debts, categories, allocations, transactions = [], rolloverBoosts = {}, payDay } = data;
+  const { income, debts, categories, allocations, transactions = [], rolloverBoosts = {}, paySchedule } = data;
   const totalDebts = debts.reduce((s, d) => s + d.amount, 0);
   const remaining = income - totalDebts;
   const totalAllocated = Object.values(allocations).reduce((s, v) => s + v, 0) + Object.values(rolloverBoosts).reduce((s, v) => s + v, 0);
@@ -263,7 +265,7 @@ function Dashboard({ data, patch, tweaks, onEdit, onReset }) {
         </div>
 
         {/* Summary cards */}
-        <SummaryCards income={income} totalDebts={totalDebts} totalAllocated={totalAllocated} totalSpent={totalSpent} remaining={remaining} payDay={payDay} />
+        <SummaryCards income={income} totalDebts={totalDebts} totalAllocated={totalAllocated} totalSpent={totalSpent} remaining={remaining} paySchedule={paySchedule} />
 
         {/* Chart + Categories */}
         <div className="dashboard-main-grid" style={{ display: 'grid', gridTemplateColumns: segments.length > 0 ? 'minmax(220px, 1fr) 2fr' : '1fr', gap: 20, marginTop: 24, alignItems: 'start' }}>

@@ -26,7 +26,7 @@ const THEMES = {
 const INIT_STATE = {
   step: 'welcome',
   income: 0,
-  payDay: 1,
+  paySchedule: { frequency: 'monthly', amount: 0, nextDate: '' },
   debts: [],
   categories: [],
   allocations: {},
@@ -36,15 +36,20 @@ const INIT_STATE = {
   done: false,
 };
 
-function getCycleStart(payDayStr, currentDate = new Date()) {
-  const payDay = Number(payDayStr) || 1;
+function getCycleStart(paySchedule, currentDate = new Date()) {
+  const schedule = typeof paySchedule === 'object' ? paySchedule : { nextDate: '' };
+  let anchorDay = 1;
+  if (schedule && schedule.nextDate) {
+    const parts = schedule.nextDate.split('-');
+    if (parts.length === 3) anchorDay = parseInt(parts[2], 10) || 1;
+  }
   let d = new Date(currentDate);
-  if (d.getDate() >= payDay) {
-    d.setDate(payDay);
+  if (d.getDate() >= anchorDay) {
+    d.setDate(anchorDay);
   } else {
     d.setMonth(d.getMonth() - 1);
     const maxDaysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    d.setDate(Math.min(payDay, maxDaysInMonth));
+    d.setDate(Math.min(anchorDay, maxDaysInMonth));
   }
   d.setHours(0,0,0,0);
   return d.toISOString();
@@ -57,7 +62,9 @@ function loadState() {
     if (raw) {
       const data = JSON.parse(raw);
       if (!data.transactions) data.transactions = [];
-      if (!data.payDay) data.payDay = 1;
+      if (!data.paySchedule) {
+        data.paySchedule = { frequency: 'monthly', amount: data.income || 0, nextDate: data.payDay ? `2026-05-${String(data.payDay).padStart(2, '0')}` : '' };
+      }
       if (!data.rolloverBoosts) data.rolloverBoosts = {};
       return data;
     }
@@ -85,7 +92,7 @@ function App() {
   useEffect(() => {
     localStorage.setItem('budgetBuddy_v1', JSON.stringify(state));
     if (state.done && state.step === 'dashboard') {
-      const currentCycle = getCycleStart(state.payDay);
+      const currentCycle = getCycleStart(state.paySchedule);
       if (!state.lastCycleStart) {
         patch({ lastCycleStart: currentCycle });
       } else if (currentCycle > state.lastCycleStart) {
@@ -108,8 +115,8 @@ function App() {
           <IncomeStep
             income={state.income}
             setIncome={(v) => patch({ income: v })}
-            payDay={state.payDay}
-            setPayDay={(v) => patch({ payDay: v })}
+            paySchedule={state.paySchedule}
+            setPaySchedule={(v) => patch({ paySchedule: v })}
             onNext={() => goStep('debts')}
             onBack={() => goStep('welcome')}
           />
@@ -144,7 +151,7 @@ function App() {
             categories={state.categories}
             allocations={state.allocations}
             setAllocations={(a) => patch({ allocations: a })}
-            onNext={() => patch({ step: 'dashboard', done: true, lastCycleStart: getCycleStart(state.payDay) })}
+            onNext={() => patch({ step: 'dashboard', done: true, lastCycleStart: getCycleStart(state.paySchedule) })}
             onBack={() => goStep('categories')}
           />
         );

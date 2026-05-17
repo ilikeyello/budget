@@ -86,57 +86,85 @@ function WelcomeStep({ onNext }) {
 }
 
 /* ═══════════════════════════ STEP 2: INCOME ═══════════════════════════ */
-function IncomeStep({ income, setIncome, payDay, setPayDay, onNext, onBack }) {
+function IncomeStep({ income, setIncome, paySchedule, setPaySchedule, onNext, onBack }) {
   const ref = useRef(null);
   useEffect(() => { setTimeout(() => ref.current?.focus(), 900); }, []);
+
+  const updateSchedule = (field, value) => {
+    const newSchedule = { ...paySchedule, [field]: value };
+    setPaySchedule(newSchedule);
+    
+    if (newSchedule.amount > 0) {
+      let monthly = 0;
+      switch (newSchedule.frequency) {
+        case 'weekly': monthly = newSchedule.amount * 4.333; break;
+        case 'biweekly': monthly = newSchedule.amount * 2.166; break;
+        case 'semimonthly': monthly = newSchedule.amount * 2; break;
+        case 'monthly': default: monthly = newSchedule.amount; break;
+      }
+      setIncome(Math.round(monthly));
+    } else {
+      setIncome(0);
+    }
+  };
+
+  const isReady = paySchedule && paySchedule.amount > 0 && paySchedule.nextDate;
 
   return (
     <div style={S.page}>
       <div style={S.card} className="anim-scale">
         <Progress step={1} total={4} />
         <Bubble i={0}>
-          <p>First things first — <strong>how much do you bring home each month?</strong></p>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 4 }}>Your take-home pay, after taxes.</p>
+          <p>First things first — <strong>how do you get paid?</strong></p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 4 }}>We'll use this to build your monthly snapshot.</p>
         </Bubble>
         <div className="anim-in" style={{ ...S.inputArea, animationDelay: '0.5s' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-tertiary)' }}>$</span>
+          
+          <div style={{ marginBottom: 20 }}>
+            <p style={{ fontWeight: 600, marginBottom: 8 }}>Pay Frequency</p>
+            <select className="input-field" value={paySchedule?.frequency || 'monthly'} onChange={e => updateSchedule('frequency', e.target.value)}>
+              <option value="weekly">Weekly</option>
+              <option value="biweekly">Bi-weekly (every 2 weeks)</option>
+              <option value="semimonthly">Semi-monthly (twice a month)</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <p style={{ fontWeight: 600, marginBottom: 8 }}>Average Paycheck Amount</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-tertiary)' }}>$</span>
+              <input
+                ref={ref}
+                type="number" inputMode="decimal"
+                className="input-field input-lg"
+                placeholder="0"
+                value={paySchedule?.amount || ''}
+                onChange={e => updateSchedule('amount', Math.max(0, Number(e.target.value) || 0))}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <p style={{ fontWeight: 600, marginBottom: 8 }}>When is your next payday?</p>
             <input
-              ref={ref}
-              type="number" inputMode="decimal"
-              className="input-field input-lg"
-              placeholder="0"
-              value={income || ''}
-              onChange={e => setIncome(Math.max(0, Number(e.target.value) || 0))}
-              onKeyDown={e => e.key === 'Enter' && income > 0 && onNext()}
+              type="date"
+              className="input-field"
+              value={paySchedule?.nextDate || ''}
+              onChange={e => updateSchedule('nextDate', e.target.value)}
             />
           </div>
+
           {income > 0 && (
-            <div className="anim-fade" style={{ marginTop: 12 }}>
-              <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                {fmt(income)}/month — that's {fmt(income * 12)}/year
-              </p>
-              <div className="anim-in" style={{ marginTop: 24, animationDelay: '0.1s' }}>
-                <p style={{ fontWeight: 600, marginBottom: 8 }}>What day of the month do you get paid?</p>
-                <input
-                  type="number" inputMode="decimal" min="1" max="31"
-                  className="input-field"
-                  placeholder="e.g. 1 or 15"
-                  value={payDay || ''}
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (val === '') setPayDay('');
-                    else setPayDay(Math.min(31, Math.max(1, Number(val))));
-                  }}
-                  style={{ maxWidth: 120 }}
-                  onKeyDown={e => e.key === 'Enter' && income > 0 && onNext()}
-                />
-              </div>
+            <div className="anim-fade" style={{ marginTop: 24, padding: 16, background: 'var(--primary-lighter)', borderRadius: 12 }}>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Based on this, your calculated monthly income is:</p>
+              <p style={{ fontSize: 24, fontWeight: 800, color: 'var(--primary-dark)' }}>{fmt(income)}<span style={{fontSize: 16, fontWeight: 600, color: 'var(--text-tertiary)'}}>/mo</span></p>
             </div>
           )}
+
           <div style={S.row}>
             <button className="btn btn-ghost" onClick={onBack}>← Back</button>
-            <button className="btn btn-primary" onClick={onNext} disabled={!income || income <= 0}>Continue →</button>
+            <button className="btn btn-primary" onClick={onNext} disabled={!isReady}>Continue →</button>
           </div>
         </div>
       </div>
@@ -458,7 +486,7 @@ function RolloverStep({ data, patch, onComplete }) {
       income: newIncome,
       rolloverBoosts: newBoosts,
       transactions: [],
-      lastCycleStart: window.getCycleStart(data.payDay)
+      lastCycleStart: window.getCycleStart(data.paySchedule)
     });
     onComplete();
   };
