@@ -165,6 +165,47 @@ function TipCard({ tip, i }) {
   );
 }
 
+/* ═══════════════════════════ LOG EXPENSE MODAL ═══════════════════════════ */
+function LogExpenseModal({ segments, transactions, patch, onClose }) {
+  const [txAmount, setTxAmount] = useState('');
+  const [txCat, setTxCat] = useState('');
+  const [txNote, setTxNote] = useState('');
+
+  const addTx = () => {
+    if (!txAmount || !txCat) return;
+    const newTx = { id: Date.now(), categoryId: txCat, amount: Number(txAmount), note: txNote, date: new Date().toISOString() };
+    patch({ transactions: [newTx, ...transactions] });
+    onClose();
+  };
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(27, 51, 39, 0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div className="anim-scale" style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: 400, padding: 24, boxShadow: 'var(--shadow-lg)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <h3 style={{ fontSize: 18 }}>Log Expense</h3>
+          <button className="btn-ghost" onClick={onClose} style={{ border: 'none', background: 'none', fontSize: 20, cursor: 'pointer', padding: 4, color: 'var(--text-tertiary)' }}>✕</button>
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <select className="input-field" value={txCat} onChange={e => setTxCat(e.target.value)}>
+            <option value="" disabled>Select Category</option>
+            {segments.map(s => <option key={s.id} value={s.id}>{s.icon} {s.name}</option>)}
+          </select>
+          
+          <div style={{ display: 'flex', alignItems: 'center', border: '2px solid var(--border)', borderRadius: 14, background: 'var(--card)', padding: '0 12px' }}>
+            <span style={{ color: 'var(--text-tertiary)', fontWeight: 700, fontSize: 20 }}>$</span>
+            <input type="number" inputMode="decimal" placeholder="0" value={txAmount} onChange={e => setTxAmount(e.target.value)} style={{ border: 'none', outline: 'none', width: '100%', fontFamily: 'Nunito, sans-serif', fontSize: 18, fontWeight: 600, padding: '14px 10px', background: 'transparent', color: 'var(--text)' }} />
+          </div>
+          
+          <input className="input-field" placeholder="Note (optional)" value={txNote} onChange={e => setTxNote(e.target.value)} />
+          
+          <button onClick={addTx} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: 14, marginTop: 8 }}>Add Transaction</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ═══════════════════════════ TRANSACTIONS ═══════════════════════════ */
 function TransactionsSection({ segments, transactions, patch }) {
   const [txAmount, setTxAmount] = useState('');
@@ -224,6 +265,7 @@ function TransactionsSection({ segments, transactions, patch }) {
 
 /* ═══════════════════════════ DASHBOARD ═══════════════════════════ */
 function Dashboard({ data, patch, tweaks, onEdit, onReset }) {
+  const [showLogModal, setShowLogModal] = useState(false);
   const { income, debts, categories, allocations, transactions = [], rolloverBoosts = {}, paySchedule } = data;
   const totalDebts = debts.reduce((s, d) => s + d.amount, 0);
   const remaining = income - totalDebts;
@@ -251,6 +293,7 @@ function Dashboard({ data, patch, tweaks, onEdit, onReset }) {
 
   return (
     <div style={{ minHeight: '100vh', minHeight: '100dvh', padding: '24px 16px', background: 'var(--surface)' }}>
+      {showLogModal && <LogExpenseModal segments={segments} transactions={transactions} patch={patch} onClose={() => setShowLogModal(false)} />}
       <div style={{ maxWidth: 900, margin: '0 auto' }}>
         {/* Header */}
         <div className="anim-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
@@ -271,7 +314,10 @@ function Dashboard({ data, patch, tweaks, onEdit, onReset }) {
         <div className="dashboard-main-grid" style={{ display: 'grid', gridTemplateColumns: segments.length > 0 ? 'minmax(220px, 1fr) 2fr' : '1fr', gap: 20, marginTop: 24, alignItems: 'start' }}>
           {segments.length > 0 && (
             <div className="anim-in" style={{ animationDelay: '0.2s', background: 'var(--card)', borderRadius: 'var(--radius)', padding: 24, boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-light)' }}>
-              <h3 style={{ marginBottom: 16, fontSize: 16 }}>Budget Breakdown</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h3 style={{ fontSize: 16 }}>Budget Breakdown</h3>
+                <button className="btn btn-primary" onClick={() => setShowLogModal(true)} style={{ padding: '6px 14px', fontSize: 13, borderRadius: 'var(--radius-pill)' }}>+ Log Expense</button>
+              </div>
               <ChartComponent segments={segments} />
               {/* Legend for donut */}
               {tweaks.chartStyle !== 'bars' && (
