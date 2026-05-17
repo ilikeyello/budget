@@ -1,4 +1,4 @@
-import { OpenAI } from 'openai';
+import { GoogleGenAI } from '@google/genai';
 
 export const config = {
   api: {
@@ -20,32 +20,38 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing image data.' });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ error: 'OPENAI_API_KEY is missing. Please configure it in your Vercel project settings.' });
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ error: 'GEMINI_API_KEY is missing. Please configure it in your Vercel project settings.' });
     }
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const catString = categories.map(c => `${c.id} (${c.name})`).join(', ');
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      response_format: { type: "json_object" },
-      messages: [
+    // Extract base64 and mime type from the data URL
+    const base64Data = image.split(',')[1];
+    const mimeType = image.split(';')[0].split(':')[1] || 'image/jpeg';
+
+    const prompt = `You are a receipt scanning assistant. Analyze the receipt. Extract the final total amount spent (number), the merchant name (string), and determine the single most appropriate category ID from the provided list. 
+Available categories: ${catString}
+Return EXACTLY a JSON object with keys: amount, merchant, categoryId.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
         {
-          role: "system",
-          content: "You are a receipt scanning assistant. Analyze the receipt. Extract the final total amount spent (number), the merchant name (string), and determine the single most appropriate category ID from the provided list. Return EXACTLY a JSON object with keys: amount, merchant, categoryId."
-        },
-        {
-          role: "user",
-          content: [
-            { type: "text", text: `Available categories: ${catString}` },
-            { type: "image_url", image_url: { url: image, detail: "low" } }
+          role: 'user',
+          parts: [
+            { text: prompt },
+            { inlineData: { data: base64Data, mimeType: mimeType } }
           ]
         }
-      ]
+      ],
+      config: {
+        responseMimeType: 'application/json',
+      }
     });
 
-    const parsed = JSON.parse(response.choices[0].message.content);
+    const parsed = JSON.parse(response.text);
     return res.status(200).json(parsed);
 
   } catch (error) {
