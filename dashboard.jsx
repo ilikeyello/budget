@@ -298,8 +298,13 @@ function TransactionsSection({ segments, transactions, patch, onEditTx }) {
                       {t.note && <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{t.note}</div>}
                     </div>
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>
-                    {fmt(t.amount)}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>
+                      {fmt(t.amount)}
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--primary)', background: 'var(--primary-lighter)', padding: '4px 10px', borderRadius: 20 }}>
+                      Edit
+                    </div>
                   </div>
                 </div>
               );
