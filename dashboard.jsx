@@ -196,12 +196,25 @@ function ScanningOverlay() {
 function LogExpenseModal({ segments, transactions, patch, onClose, initialData = {} }) {
   const [txAmount, setTxAmount] = useState(initialData.amount ? String(initialData.amount) : '');
   const [txCat, setTxCat] = useState(initialData.categoryId || '');
-  const [txNote, setTxNote] = useState(initialData.merchant || '');
+  const [txNote, setTxNote] = useState(initialData.merchant || initialData.note || '');
 
   const addTx = () => {
     if (!txAmount || !txCat) return;
-    const newTx = { id: Date.now(), categoryId: txCat, amount: Number(txAmount), note: txNote, date: new Date().toISOString() };
-    patch({ transactions: [newTx, ...transactions] });
+    if (initialData.id) {
+      const updated = transactions.map(t => t.id === initialData.id ? { ...t, categoryId: txCat, amount: Number(txAmount), note: txNote } : t);
+      patch({ transactions: updated });
+    } else {
+      const newTx = { id: Date.now(), categoryId: txCat, amount: Number(txAmount), note: txNote, date: new Date().toISOString() };
+      patch({ transactions: [newTx, ...transactions] });
+    }
+    onClose();
+  };
+
+  const deleteTx = () => {
+    if (initialData.id) {
+      const updated = transactions.filter(t => t.id !== initialData.id);
+      patch({ transactions: updated });
+    }
     onClose();
   };
 
@@ -209,7 +222,7 @@ function LogExpenseModal({ segments, transactions, patch, onClose, initialData =
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(27, 51, 39, 0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div className="anim-scale" style={{ background: 'var(--card)', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: 400, padding: 24, boxShadow: 'var(--shadow-lg)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h3 style={{ fontSize: 18 }}>Log Expense</h3>
+          <h3 style={{ fontSize: 18 }}>{initialData.id ? 'Edit Expense' : 'Log Expense'}</h3>
           <button className="btn-ghost" onClick={onClose} style={{ border: 'none', background: 'none', fontSize: 20, cursor: 'pointer', padding: 4, color: 'var(--text-tertiary)' }}>✕</button>
         </div>
         
@@ -226,7 +239,15 @@ function LogExpenseModal({ segments, transactions, patch, onClose, initialData =
           
           <input className="input-field" placeholder="Note (optional)" value={txNote} onChange={e => setTxNote(e.target.value)} />
           
-          <button onClick={addTx} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: 14, marginTop: 8 }}>Add Transaction</button>
+          <button onClick={addTx} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: 14, marginTop: 8 }}>
+            {initialData.id ? 'Save Changes' : 'Add Transaction'}
+          </button>
+
+          {initialData.id && (
+            <button onClick={deleteTx} className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', padding: 14, marginTop: 4, color: '#E85D5D', fontWeight: 600 }}>
+              Delete Transaction
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -234,7 +255,7 @@ function LogExpenseModal({ segments, transactions, patch, onClose, initialData =
 }
 
 /* ═══════════════════════════ TRANSACTIONS ═══════════════════════════ */
-function TransactionsSection({ segments, transactions, patch }) {
+function TransactionsSection({ segments, transactions, patch, onEditTx }) {
   const [txAmount, setTxAmount] = useState('');
   const [txCat, setTxCat] = useState('');
   const [txNote, setTxNote] = useState('');
@@ -269,7 +290,7 @@ function TransactionsSection({ segments, transactions, patch }) {
             {transactions.slice(0, 5).map(t => {
               const cat = segments.find(s => s.id === t.categoryId) || {};
               return (
-                <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--surface)', borderRadius: 10 }}>
+                <div key={t.id} onClick={() => onEditTx && onEditTx(t)} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--surface)', borderRadius: 10, cursor: 'pointer' }}>
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                     <span style={{ fontSize: 18 }}>{cat.icon || '💸'}</span>
                     <div>
@@ -296,6 +317,11 @@ function Dashboard({ data, patch, tweaks, onEdit, onReset }) {
   const [scanData, setScanData] = useState({});
   const [isScanning, setIsScanning] = useState(false);
   const { income, debts, categories, allocations, transactions = [], rolloverBoosts = {}, paySchedule } = data;
+
+  const handleEditTx = (tx) => {
+    setScanData(tx);
+    setShowLogModal(true);
+  };
   const totalDebts = debts.reduce((s, d) => s + d.amount, 0);
   const remaining = income - totalDebts;
   const totalAllocated = Object.values(allocations).reduce((s, v) => s + v, 0) + Object.values(rolloverBoosts).reduce((s, v) => s + v, 0);
@@ -447,7 +473,7 @@ function Dashboard({ data, patch, tweaks, onEdit, onReset }) {
         )}
 
         {/* Transactions Form & List */}
-        <TransactionsSection segments={segments} transactions={transactions} patch={patch} />
+        <TransactionsSection segments={segments} transactions={transactions} patch={patch} onEditTx={handleEditTx} />
 
         {/* Saving Tips */}
         {tweaks.showTips && tips.length > 0 && (
